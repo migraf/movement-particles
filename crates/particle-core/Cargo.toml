@@ -1,0 +1,17 @@
+[package]
+name = "particle-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+glam = { workspace = true }
+rand = { workspace = true }
+bytemuck = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { workspace = true }
+
+[lib]
+crate-type = ["lib"]

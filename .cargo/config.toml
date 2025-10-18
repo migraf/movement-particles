@@ -1,0 +1,16 @@
+[build]
+# Use LLD linker for faster builds
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[target.wasm32-unknown-unknown]
+# Optimize for size in WASM builds
+rustflags = ["-C", "link-arg=-s"]
+
+[profile.dev]
+# Faster compile times
+opt-level = 1
+
+[profile.dev.package."*"]
+# Optimize dependencies even in dev builds
+opt-level = 2
+

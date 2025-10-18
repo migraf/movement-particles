@@ -1,0 +1,25 @@
+[package]
+name = "renderer"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+particle-core = { path = "../particle-core" }
+glam = { workspace = true }
+bytemuck = { workspace = true }
+wgpu = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+winit = { workspace = true }
+pollster = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { workspace = true }
+web-sys = { workspace = true, features = [
+    "Document",
+    "Window",
+    "Element",
+    "HtmlCanvasElement",
+] }

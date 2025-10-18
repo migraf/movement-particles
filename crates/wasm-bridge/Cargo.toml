@@ -1,0 +1,36 @@
+[package]
+name = "wasm-bridge"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+particle-core = { path = "../particle-core" }
+renderer = { path = "../renderer" }
+glam = { workspace = true }
+bytemuck = { workspace = true }
+wasm-bindgen = { workspace = true }
+web-sys = { workspace = true, features = [
+    "console",
+    "Window",
+    "Document",
+    "HtmlCanvasElement",
+    "WebGl2RenderingContext",
+    "Performance",
+    "OffscreenCanvas",
+] }
+js-sys = { workspace = true }
+console_error_panic_hook = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+wgpu = { workspace = true }
+
+[profile.release]
+opt-level = "z"
+lto = true

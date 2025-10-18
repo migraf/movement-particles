@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/particle-core",
+    "crates/renderer",
+    "crates/wasm-bridge",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["micha"]
+license = "MIT"
+
+[workspace.dependencies]
+# Math and utilities
+glam = "0.28"
+rand = "0.8"
+bytemuck = { version = "1.14", features = ["derive"] }
+getrandom = { version = "0.2", features = ["js"] }
+
+# Graphics
+wgpu = "22.1"
+winit = "0.30"
+
+# WASM
+wasm-bindgen = "0.2"
+web-sys = "0.3"
+js-sys = "0.3"
+console_error_panic_hook = "0.1"
+wasm-bindgen-futures = "0.4"
+
+# Async
+pollster = "0.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.release-wasm]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
+
