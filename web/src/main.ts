@@ -33,18 +33,6 @@ class Application {
 
   async initialize() {
     try {
-      // Check WebGPU support
-      if (!navigator.gpu) {
-        const msg = 'WebGPU is not supported in your browser.\n\n' +
-                    'Please use:\n' +
-                    '- Chrome/Edge 113+ with WebGPU enabled\n' +
-                    '- Chrome Canary with chrome://flags/#enable-unsafe-webgpu\n\n' +
-                    'Or check: https://caniuse.com/webgpu';
-        alert(msg);
-        throw new Error('WebGPU not supported');
-      }
-
-      console.log('✓ WebGPU is supported');
       console.log('Initializing WASM module...');
       await init();
 
@@ -56,6 +44,15 @@ class Application {
       window.addEventListener('resize', () => this.resizeCanvas());
 
       console.log('Initializing renderer...');
+      console.log('Canvas dimensions:', this.canvas.width, 'x', this.canvas.height);
+      
+      // Check if WebGPU is available
+      if (navigator.gpu) {
+        console.log('✓ WebGPU is available');
+      } else {
+        console.log('⚠ WebGPU not available, will try WebGL fallback');
+      }
+
       await this.app.init_renderer(this.canvas, this.canvas.width, this.canvas.height);
 
       // Hide loading screen
@@ -76,11 +73,26 @@ class Application {
       // Show error in UI
       const loading = document.getElementById('loading');
       if (loading) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const isWebGPUError = errorMsg.includes('webgpu') || errorMsg.includes('surface');
+        
         loading.innerHTML = `
           <h2 style="color: #ff4444;">⚠️ Initialization Failed</h2>
-          <p style="max-width: 500px; margin: 20px auto; text-align: left;">
-            ${error instanceof Error ? error.message : String(error)}
-          </p>
+          <div style="max-width: 600px; margin: 20px auto; text-align: left; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px;">
+            <p style="margin-bottom: 15px; color: #fff;">${errorMsg}</p>
+            ${isWebGPUError ? `
+              <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; margin-top: 15px;">
+                <p style="color: #ffa500; font-weight: bold; margin-bottom: 10px;">🔧 Possible Solutions:</p>
+                <ul style="color: #ccc; line-height: 1.8; padding-left: 20px;">
+                  <li>Use <strong>Chrome 113+</strong> or <strong>Edge 113+</strong></li>
+                  <li>Enable WebGPU: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px;">chrome://flags/#enable-unsafe-webgpu</code></li>
+                  <li>Try <strong>Chrome Canary</strong> for latest WebGPU support</li>
+                  <li>Firefox: Enable <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px;">dom.webgpu.enabled</code> in about:config</li>
+                </ul>
+                <p style="color: #888; font-size: 12px; margin-top: 15px;">Check compatibility: <a href="https://caniuse.com/webgpu" target="_blank" style="color: #4a9eff;">caniuse.com/webgpu</a></p>
+              </div>
+            ` : ''}
+          </div>
           <p style="color: #aaa; font-size: 14px;">Check the browser console for more details</p>
         `;
       }

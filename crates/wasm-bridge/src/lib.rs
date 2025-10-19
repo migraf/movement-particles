@@ -60,36 +60,71 @@ impl App {
     pub async fn init_renderer(&mut self, canvas: web_sys::HtmlCanvasElement, width: u32, height: u32) -> Result<(), JsValue> {
         console_log!("Initializing renderer {}x{}", width, height);
 
-        // Create wgpu instance - prefer WebGPU, fallback to WebGL
+        // Validate canvas dimensions
+        if width == 0 || height == 0 {
+            let err_msg = format!("Invalid canvas dimensions: {}x{}", width, height);
+            console_log!("{}", err_msg);
+            return Err(JsValue::from_str(&err_msg));
+        }
+
+        // Create wgpu instance - try WebGPU first, fallback to WebGL
+        let backends = if cfg!(target_arch = "wasm32") {
+            // On WASM, prefer WebGL for better compatibility
+            wgpu::Backends::GL | wgpu::Backends::BROWSER_WEBGPU
+        } else {
+            wgpu::Backends::all()
+        };
+
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL,
+            backends,
             ..Default::default()
         });
 
-        console_log!("Created wgpu instance");
+        console_log!("Created wgpu instance with backends: {:?}", backends);
 
         // Create surface from canvas - WASM-specific approach
         let surface = instance
             .create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone()))
             .map_err(|e| {
-                let err_msg = format!("Failed to create surface: {:?}\n\nPlease ensure:\n1. Your browser supports WebGPU\n2. Canvas is not already in use\n3. Try Chrome/Edge with WebGPU enabled", e);
-                console_log!("{}", err_msg);
+                let err_msg = format!(
+                    "Failed to create surface: {:?}\n\n\
+                    This application requires WebGPU or WebGL2 support.\n\n\
+                    Troubleshooting:\n\
+                    1. Ensure you're using a modern browser (Chrome 113+, Edge 113+, or Firefox 113+)\n\
+                    2. For WebGPU: Enable chrome://flags/#enable-unsafe-webgpu\n\
+                    3. For Firefox: Enable dom.webgpu.enabled in about:config\n\
+                    4. Clear browser cache and reload\n\
+                    5. Check if another WebGPU app is using the GPU\n\n\
+                    Browser compatibility: https://caniuse.com/webgpu", 
+                    e
+                );
+                console_log!("ERROR: {}", err_msg);
                 JsValue::from_str(&err_msg)
             })?;
 
-        console_log!("Created surface");
+        console_log!("Created surface successfully");
 
-        let renderer = Renderer::new(surface, width, height).await;
+        let renderer = Renderer::new(surface, width, height).await
+            .map_err(|e| {
+                let err_msg = format!("Failed to initialize renderer: {}", e);
+                console_log!("ERROR: {}", err_msg);
+                JsValue::from_str(&err_msg)
+            })?;
+
+        console_log!("Renderer created successfully");
+
         let particle_renderer = ParticleRenderer::new(
             &renderer.device,
             renderer.config.format,
             self.particle_system.config.max_particles,
         );
 
+        console_log!("Particle renderer created successfully");
+
         self.renderer = Some(renderer);
         self.particle_renderer = Some(particle_renderer);
 
-        console_log!("Renderer initialized successfully");
+        console_log!("✓ Renderer initialized successfully!");
         Ok(())
     }
 

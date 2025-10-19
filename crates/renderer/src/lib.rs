@@ -20,7 +20,7 @@ pub struct Renderer {
 
 impl Renderer {
     /// Creates a new renderer for the given surface
-    pub async fn new(surface: wgpu::Surface<'static>, width: u32, height: u32) -> Self {
+    pub async fn new(surface: wgpu::Surface<'static>, width: u32, height: u32) -> Result<Self, String> {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             ..Default::default()
@@ -33,7 +33,10 @@ impl Renderer {
                 force_fallback_adapter: false,
             })
             .await
-            .expect("Failed to find an appropriate adapter");
+            .ok_or_else(|| {
+                "Failed to find an appropriate GPU adapter. \
+                Your browser or system may not support WebGPU/WebGL2.".to_string()
+            })?;
 
         let (device, queue) = adapter
             .request_device(
@@ -50,15 +53,24 @@ impl Renderer {
                 None,
             )
             .await
-            .expect("Failed to create device");
+            .map_err(|e| format!("Failed to create GPU device: {}", e))?;
 
         let surface_caps = surface.get_capabilities(&adapter);
+        
+        if surface_caps.formats.is_empty() {
+            return Err("No surface formats available".to_string());
+        }
+
         let surface_format = surface_caps
             .formats
             .iter()
             .copied()
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
+
+        if surface_caps.alpha_modes.is_empty() {
+            return Err("No alpha modes available".to_string());
+        }
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -73,13 +85,13 @@ impl Renderer {
 
         surface.configure(&device, &config);
 
-        Self {
+        Ok(Self {
             surface,
             device,
             queue,
             config,
             size: (width, height),
-        }
+        })
     }
 
     /// Resizes the render surface
