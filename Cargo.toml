@@ -14,24 +14,24 @@ license = "MIT"
 
 [workspace.dependencies]
 # Math and utilities
-glam = "0.28"
+glam = "*"
 rand = "0.8"
-bytemuck = { version = "1.14", features = ["derive"] }
-getrandom = { version = "0.2", features = ["js"] }
+bytemuck = { version = "*", features = ["derive"] }
+getrandom = { version = "*", features = ["js"] }
 
 # Graphics
-wgpu = "22.1"
-winit = "0.30"
+wgpu = "27.0.1"
+winit = "*"
 
 # WASM
-wasm-bindgen = "0.2"
-web-sys = "0.3"
-js-sys = "0.3"
-console_error_panic_hook = "0.1"
-wasm-bindgen-futures = "0.4"
+wasm-bindgen = "*"
+web-sys = "*"
+js-sys = "*"
+console_error_panic_hook = "*"
+wasm-bindgen-futures = "*"
 
 # Async
-pollster = "0.3"
+pollster = "*"
 
 [profile.release]
 opt-level = 3

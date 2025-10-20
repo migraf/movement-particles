@@ -21,7 +21,7 @@ pub struct Renderer {
 impl Renderer {
     /// Creates a new renderer for the given surface
     pub async fn new(surface: wgpu::Surface<'static>, width: u32, height: u32) -> Result<Self, String> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             ..Default::default()
         });
@@ -33,25 +33,17 @@ impl Renderer {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or_else(|| {
-                "Failed to find an appropriate GPU adapter. \
-                Your browser or system may not support WebGPU/WebGL2.".to_string()
-            })?;
-
+            .map_err(|e| format!("Failed to find an appropriate GPU adapter: {}", e))?;
+        
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
-                    memory_hints: Default::default(),
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: None,
+                required_features: wgpu::Features::empty(),
+                required_limits: Default::default(),
+                memory_hints: Default::default(),
+                experimental_features: Default::default(),
+                trace: Default::default(),
+            })
             .await
             .map_err(|e| format!("Failed to create GPU device: {}", e))?;
 
